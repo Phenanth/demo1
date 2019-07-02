@@ -57,60 +57,65 @@ if [ "$part" == "" ]; then
 	exit 1
 fi
 
-# disk=${part%%[0-9]}
-# index=${part#$disk}
+disk=${part%%[0-9]}
+index=${part#$disk}
 
-# boot=$root/boot
-# boot_iso=$root/iso
-# mkdir -vp $boot $boot_iso
+# string concat
+boot=$root/boot
+boot_iso=$root/iso
+mkdir -vp $boot $boot_iso
 
 # ############### copy ISO ###############
-# if [ -d $repo ]; then
-# 	src_list=(`ls $repo/*.iso`)
-# 	if [ ${#src_list[@]} -eq 0 ]; then
-# 		echo "No iso files in '$repo'!"
-# 		exit 1
-# 	fi
-# elif [ -e $repo ]; then
-# 	src_list=($repo)
-# else
-# 	echo "'$repo' is invalid!"
-# 	exit 1
-# fi
+if [ -d $repo ]; then # if directory
+	src_list=(`ls $repo/*.iso`)
+	if [ ${#src_list[@]} -eq 0 ]; then
+		echo "No iso files in '$repo'!"
+		exit 1
+	fi
+elif [ -e $repo ]; then # if exists
+	src_list=($repo)
+else
+	echo "'$repo' is invalid!"
+	exit 1
+fi
 
-# iso_list=()
+iso_list=()
 
-# count=1
-# for iso in ${src_list[@]}
-# do
-# 	echo "[$count/${#src_list[@]}]"
+count=1
+for iso in ${src_list[@]}
+do
+	# present index / total indexs
+	echo "[$count/${#src_list[@]}]"
 
-# 	iso_fn=`basename $iso`
+	# get filename from iso, useless in python
+	iso_fn=`basename $iso`
 
-# 	iso_list=(${iso_list[@]} $iso_fn)
+	# add iso_fn into iso_list
+	iso_list=(${iso_list[@]} $iso_fn)
 
-# 	if [ -e $boot_iso/$iso_fn ]; then
-# 		echo "$boot_iso/$iso_fn already exists"
-# 	else
-# 		cp -v $iso $boot_iso
-# 	fi
+	if [ -e $boot_iso/$iso_fn ]; then
+		echo "$boot_iso/$iso_fn already exists"
+	else
+		cp -v $iso $boot_iso
+	fi
 
-# 	((count++))
-# done
+	((count++))
+done
 
 # ############# install grub #############
-# echo "installing grub to $boot for $disk ..."
+echo "installing grub to $boot for $disk ..."
 
-# if which grub2-install > /dev/null; then
-# 	grub_cmd="grub2-install"
-# 	grub_cfg="$boot/grub2/grub.cfg"
-# elif which grub-install > /dev/null; then
-# 	grub_cmd="grub-install --removable"
-# 	grub_cfg="$boot/grub/grub.cfg"
-# else
-# 	echo "not grub installer found!"
-# 	exit 1
-# fi
+# input redirect to /dev/null
+if which grub2-install > /dev/null; then
+	grub_cmd="grub2-install"
+	grub_cfg="$boot/grub2/grub.cfg"
+elif which grub-install > /dev/null; then
+	grub_cmd="grub-install --removable"
+	grub_cfg="$boot/grub/grub.cfg"
+else
+	echo "not grub installer found!"
+	exit 1
+fi
 
 # function blk_tag() {
 # 	blkid -s $1 $2| perl -p -e 's/.*="(.*?)".*/\1/'
