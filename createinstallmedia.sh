@@ -117,69 +117,69 @@ else
 	exit 1
 fi
 
-# function blk_tag() {
-# 	blkid -s $1 $2| perl -p -e 's/.*="(.*?)".*/\1/'
-# 	#blkid -s $1 $2 | awk -F ": $1=" '{print $2}'
-# }
+function blk_tag() {
+	blkid -s $1 $2| perl -p -e 's/.*="(.*?)".*/\1/'
+	#blkid -s $1 $2 | awk -F ": $1=" '{print $2}'
+}
 
-# pttype=`blk_tag PTTYPE $disk`
-# echo "$disk partition type: $pttype"
+pttype=`blk_tag PTTYPE $disk`
+echo "$disk partition type: $pttype"
 
-# if [ $pttype = "gpt" ]; then
-# 	grub_cmd="$grub_cmd --target=x86_64-efi"
+if [ $pttype = "gpt" ]; then
+	grub_cmd="$grub_cmd --target=x86_64-efi"
 
-# 	esp=`parted $disk print | awk '/boot.*esp/{print $1}'`
-# 	num='^[0-9]+$'
-# 	if ! [[ "$esp" =~ $num ]]; then
-# 		echo "ESP partition not found!"
-# 		exit 1
-# 	fi
-# 	umount $disk$esp 2>/dev/null
-# 	mkdir -p $boot/efi
-# 	mount $disk$esp $boot/efi
-# 	#rm -rf $boot/efi/EFI
-# else
-# 	grub_cmd="$grub_cmd --target=i386-pc"
-# fi
+	esp=`parted $disk print | awk '/boot.*esp/{print $1}'`
+	num='^[0-9]+$'
+	if ! [[ "$esp" =~ $num ]]; then
+		echo "ESP partition not found!"
+		exit 1
+	fi
+	umount $disk$esp 2>/dev/null
+	mkdir -p $boot/efi
+	mount $disk$esp $boot/efi
+	#rm -rf $boot/efi/EFI
+else
+	grub_cmd="$grub_cmd --target=i386-pc"
+fi
 
-# rm -rf $boot/grub $boot/grub2
+rm -rf $boot/grub $boot/grub2
 
-# $grub_cmd --boot-directory=$boot $disk || exit 1
+$grub_cmd --boot-directory=$boot $disk || exit 1
 
-# echo "Generating $grub_cfg ..."
-# echo "GRUB_TIMEOUT=5" > $grub_cfg
-# if [ $pttype = "gpt" ]; then
-# 	echo "insmod part_gpt" >> $grub_cfg
-# fi
-# echo "insmod ext2" >> $grub_cfg
+echo "Generating $grub_cfg ..."
+echo "GRUB_TIMEOUT=5" > $grub_cfg
+if [ $pttype = "gpt" ]; then
+	echo "insmod part_gpt" >> $grub_cfg
+fi
+echo "insmod ext2" >> $grub_cfg
 
-# for iso_fn in ${iso_list[@]}
-# do
-# 	label=`blk_tag LABEL $boot_iso/$iso_fn`
-# 	if [ -z "$label" ]; then
-# 		echo "'$boot_iso/$iso_fn' is NOT a valid ISO image!"
-# 		#rm -vf $boot_iso/$iso_fn
-# 		echo
-# 		continue
-# 	fi
+for iso_fn in ${iso_list[@]}
+do
+	label=`blk_tag LABEL $boot_iso/$iso_fn`
+	if [ -z "$label" ]; then
+		echo "'$boot_iso/$iso_fn' is NOT a valid ISO image!"
+		#rm -vf $boot_iso/$iso_fn
+		echo
+		continue
+	fi
 
-# 	echo "generating menuentry for $label ..."
-# 	case "$label" in
-# 		RHEL* | CentOS* | OL* | Fedora*)
-# 			uuid=`blk_tag UUID $part`
-# 			linux="isolinux/vmlinuz repo=hd:UUID=$uuid:/iso/"
-# 			initrd="isolinux/initrd.img"
-# 			;;
+	echo "generating menuentry for $label ..."
+	case "$label" in
+		RHEL* | CentOS* | OL* | Fedora*)
+			uuid=`blk_tag UUID $part`
+			linux="isolinux/vmlinuz repo=hd:UUID=$uuid:/iso/"
+			initrd="isolinux/initrd.img"
+			;;
 
-# 		Ubuntu* | Deiban*)
-# 			linux="casper/vmlinuz.efi boot=casper iso-scan/filename=/iso/$iso_fn"
-# 			initrd="casper/initrd.lz"
-# 			;;
-# 		*)
-# 			echo "Warning: distribution '$label' not supported (skipped)!"
-# 			continue
-# 			;;
-# 	esac
+		Ubuntu* | Deiban*)
+			linux="casper/vmlinuz.efi boot=casper iso-scan/filename=/iso/$iso_fn"
+			initrd="casper/initrd.lz"
+			;;
+		*)
+			echo "Warning: distribution '$label' not supported (skipped)!"
+			continue
+			;;
+	esac
 
 # 	cat >> $grub_cfg << _OEF_
 # menuentry 'Install $label' {
