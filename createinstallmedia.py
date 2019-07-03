@@ -175,7 +175,9 @@ if pttype == 'gpt':
 			exit(1)
 
 		# Mount parts in /dev
+		# os.listdir() will only list basename
 		for part in os.listdir('/dev'):
+			part = '/dev/' + part
 			if re.match(disk + r'\d+', part): # or + '\d+p\d+'
 				subprocess.call('umount ' + part)
 
@@ -234,6 +236,9 @@ for iso in iso_list:
 	]
 	cf.writelines(menuentry)
 
+cf.close()
+
 #### Finish ####
+# Umount this, reboot
 if pttype == 'gpt':
 	subprocess.call('umount {}/efi'.format(boot_dir), shell=True)
